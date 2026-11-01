@@ -106,13 +106,14 @@
       const isAdmin = currentUserRole === 'admin';
 
       levels.forEach(lvl => {
-        // Exibe o botão de showcase caso exista o link cadastrado
         const showcaseLink = lvl.showcase_url || lvl.video_url || null;
+        const isPlat = (lvl.is_platformer === true || lvl.game_mode === 'platformer');
+        const modeLabel = isPlat ? 'plat.' : 'clas.';
 
         container.innerHTML += `
           <div class="card">
             <div>
-              <strong>${lvl.name}</strong> (${lvl.gd_id}) <span style="color:var(--accent-blue)">[${lvl.list_type}]</span><br>
+              <strong>${lvl.name}</strong> (${lvl.gd_id}) <span style="color:var(--accent-blue)">[${lvl.list_type}]</span> <span style="color:var(--text-muted); font-size: 0.8rem;">[${modeLabel}]</span><br>
               <small style="color:var(--text-muted)">Criador: ${lvl.creator} | Verificador: ${lvl.verifier} ${!isPending ? `| Posição Atual: #${lvl.position || '-'}` : ''}</small>
             </div>
             <div class="actions">
@@ -174,7 +175,6 @@
         return;
       }
 
-      // Chama a RPC para aprovação segura sem loops
       const { error } = await supabaseClient.rpc('approve_level_with_pos', {
         p_level_id: id,
         p_target_pos: targetPos
@@ -203,7 +203,6 @@
 
       if (newPos === currentPos) return;
 
-      // Chama a RPC para alteração de posição sem loops
       const { error } = await supabaseClient.rpc('update_level_position', {
         p_level_id: id,
         p_new_pos: newPos

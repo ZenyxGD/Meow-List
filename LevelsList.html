@@ -25,9 +25,13 @@
     .btn-nav { background: var(--accent-blue); color: #fff; text-decoration: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
     .btn-send { background: var(--accent-green); }
 
-    .tabs { display: flex; gap: 10px; margin-bottom: 20px; width: 100%; max-width: 900px; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 12px; width: 100%; max-width: 900px; }
     .tab-btn { flex: 1; padding: 12px; background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-muted); font-weight: bold; border-radius: 8px; cursor: pointer; text-align: center; }
     .tab-btn.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+
+    .sub-tabs { display: flex; gap: 8px; margin-bottom: 20px; width: 100%; max-width: 900px; justify-content: center; }
+    .sub-tab-btn { padding: 8px 20px; background: #0b111e; border: 1px solid var(--card-border); color: var(--text-muted); font-weight: 600; font-size: 0.85rem; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+    .sub-tab-btn.active { background: #1e293b; color: var(--accent-blue); border-color: var(--accent-blue); }
 
     .list-container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 10px; }
     
@@ -75,16 +79,25 @@
     </div>
   </header>
 
+  <!-- ABAS DA LISTA -->
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('LPDM')">LPDM</button>
     <button class="tab-btn" onclick="switchTab('LIDM')">LIDM</button>
     <button class="tab-btn" onclick="switchTab('LLBDM')">LLBDM</button>
   </div>
 
+  <!-- SUB-ABAS (CLÁSSICO / PLATAFORMA) -->
+  <div class="sub-tabs">
+    <button class="sub-tab-btn active" onclick="switchSubTab('classico')"><i class="fa-solid fa-cube"></i> Clássico</button>
+    <button class="sub-tab-btn" onclick="switchSubTab('plataforma')"><i class="fa-solid fa-gamepad"></i> Plataforma</button>
+  </div>
+
+  <!-- CONTEÚDO DA LISTA -->
   <main class="list-container" id="listContainer">
     <p style="text-align: center; color: var(--text-muted);">Carregando níveis...</p>
   </main>
 
+  <!-- MODAL DE EDIÇÃO ADMIN -->
   <div class="modal-overlay" id="editModal" style="display: none;">
     <div class="modal-card">
       <h3 style="color:#fff;"><i class="fa-solid fa-pen-to-square"></i> Editar Nível (Admin)</h3>
@@ -133,6 +146,7 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let currentCategory = 'LPDM';
+    let currentSubTab = 'classico';
     let openLevelId = null;
     let isAdmin = false;
     let levelsDataCache = [];
@@ -162,9 +176,17 @@
     function switchTab(cat) {
       currentCategory = cat;
       openLevelId = null;
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
       event.target.classList.add('active');
       loadCategoryList(cat);
+    }
+
+    function switchSubTab(sub) {
+      currentSubTab = sub;
+      openLevelId = null;
+      document.querySelectorAll('.sub-tabs .sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      renderList();
     }
 
     function extractYouTubeEmbedUrl(url) {
@@ -184,6 +206,7 @@
         .order('position', { ascending: true });
 
       if (error || !levels || levels.length === 0) {
+        levelsDataCache = [];
         container.innerHTML = `<p style="text-align:center; color: var(--text-muted);">Nenhum nível aprovado nesta categoria ainda.</p>`;
         return;
       }
@@ -205,7 +228,18 @@
       const container = document.getElementById('listContainer');
       container.innerHTML = '';
 
-      levelsDataCache.forEach(lvl => {
+      const filteredLevels = levelsDataCache.filter(lvl => {
+        const isPlat = (lvl.is_platformer === true || lvl.game_mode === 'plataforma');
+        return currentSubTab === 'plataforma' ? isPlat : !isPlat;
+      });
+
+      if (filteredLevels.length === 0) {
+        const modoTexto = currentSubTab === 'plataforma' ? 'de Plataforma' : 'Clássicos';
+        container.innerHTML = `<p style="text-align:center; color: var(--text-muted);">Nenhum nível ${modoTexto} aprovado nesta categoria ainda.</p>`;
+        return;
+      }
+
+      filteredLevels.forEach(lvl => {
         const isOpen = (openLevelId === lvl.id);
 
         let showcaseHtml = '';
@@ -222,7 +256,7 @@
           showcaseHtml = `
             <div class="showcase-container">
               <div class="showcase-fallback">
-                <i class="fa-solid fa-triangle-exclamation"></i> showcase não encontrada/não e do YouTube
+                <i class="fa-solid fa-triangle-exclamation"></i> showcase não encontrada/não é do YouTube
               </div>
             </div>
           `;
@@ -230,7 +264,6 @@
 
         const descriptionText = lvl.description ? lvl.description : "Sem descrição";
 
-        // Bloco da NONG
         let nongHtml = '';
         if (lvl.has_nong) {
           nongHtml = `

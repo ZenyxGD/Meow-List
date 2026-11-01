@@ -67,7 +67,7 @@
 
       const { data: records, error } = await supabaseClient
         .from('records')
-        .select('*, levels(name, creator, gd_id)')
+        .select('*, levels(name, creator, gd_id, list_type, is_platformer, game_mode)')
         .eq('status', 'approved');
 
       if (error || !records || records.length === 0) {
@@ -99,10 +99,16 @@
           const lvlName = r.levels ? r.levels.name : 'Nível Removido';
           const creator = r.levels ? r.levels.creator : 'Desconhecido';
           const gdId = r.levels ? r.levels.gd_id : '?';
+          const listType = r.levels ? (r.levels.list_type || 'LPDM') : 'LPDM';
+          
+          const isPlat = r.levels ? (r.levels.is_platformer || r.levels.game_mode === 'plataforma') : false;
+          const gameModeName = isPlat ? 'Plataforma' : 'Clássico';
 
-          // Montagem no formato exigido: [nome do level] • [porcentagem] • Mortes no noclip: [X] • Noclip accuracy: [Y] • "Practice mode"
+          // Montagem no formato exigido: [nome do level] • [Lista] • [Modo] • [porcentagem]...
           let infoParts = [];
           infoParts.push(`<strong>${lvlName}</strong>`);
+          infoParts.push(listType);
+          infoParts.push(gameModeName);
           
           let pctText = `${r.progress}%`;
           if (r.is_practice) {

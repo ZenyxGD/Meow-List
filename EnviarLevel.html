@@ -21,6 +21,8 @@
     button { background: var(--accent-blue); color: #fff; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; font-size: 1rem; }
     a { color: var(--text-muted); text-decoration: none; font-size: 0.85rem; display: inline-block; margin-bottom: 15px; }
     .guest-banner { background: #1e293b; border: 1px solid var(--card-border); padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
+    .rules-box { background: #0b111e; border: 1px solid var(--card-border); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
+    .rules-box b { color: var(--text-main); }
   </style>
 </head>
 <body>
@@ -28,6 +30,15 @@
     <a href="index.html"><i class="fa-solid fa-arrow-left"></i> Voltar ao Início</a>
     <h2>Enviar Nível - Meow List</h2>
     
+    <!-- Caixa de Regras -->
+    <div class="rules-box">
+      <b>Regras de Envio:</b><br>
+      1. Apenas levels feitos por fãs do Meow<br>
+      2. Por favor, dê um pouco de esforço<br>
+      3. Sem spam de levels<br>
+      Obrigado
+    </div>
+
     <div id="userStatusBanner" class="guest-banner" style="display:none;">
       <span id="userStatusText">Modo Convidado</span>
       <a href="CadastroLogin.html" style="margin:0; color: var(--accent-blue);">Entrar/Criar Conta</a>
@@ -63,13 +74,19 @@
         </select>
       </div>
 
-      <!-- Showcase Obrigatória (Apenas YouTube) -->
+      <div class="form-group">
+        <label>Modo de Jogo</label>
+        <select id="gameMode" required>
+          <option value="classico">Clássico</option>
+          <option value="plataforma">Plataforma</option>
+        </select>
+      </div>
+
       <div class="form-group">
         <label>Link da Showcase (Obrigatório - Apenas YouTube)</label>
         <input type="text" id="showcaseUrl" required placeholder="Ex: https://www.youtube.com/watch?v=... ou https://youtu.be/...">
       </div>
 
-      <!-- Descrição Opcional -->
       <div class="form-group">
         <label>Descrição (Opcional)</label>
         <textarea id="levelDescription" placeholder="Escreva uma breve descrição sobre o level..."></textarea>
@@ -150,6 +167,8 @@
       const creator = document.getElementById('levelCreator').value.trim();
       const verifier = document.getElementById('levelVerifier').value.trim();
       const listType = document.getElementById('listType').value;
+      const gameMode = document.getElementById('gameMode').value;
+      const isPlatformer = (gameMode === 'plataforma');
       const description = document.getElementById('levelDescription').value.trim() || null;
       const hasNong = document.getElementById('hasNong').checked;
       const nongName = document.getElementById('nongName').value.trim();
@@ -165,6 +184,8 @@
           creator: creator,
           verifier: verifier,
           list_type: listType,
+          game_mode: gameMode,
+          is_platformer: isPlatformer,
           showcase_url: showcaseUrl,
           video_url: showcaseUrl,
           description: description,
