@@ -107,8 +107,12 @@
 
       levels.forEach(lvl => {
         const showcaseLink = lvl.showcase_url || lvl.video_url || null;
-        const isPlat = (lvl.is_platformer === true || lvl.game_mode === 'platformer');
-        const modeLabel = isPlat ? 'plat.' : 'clas.';
+        
+        // Identificação do modo de jogo com "challange" solicitado
+        const mode = lvl.game_mode || (lvl.is_platformer ? 'plataforma' : 'classico');
+        let modeLabel = 'clas.';
+        if (mode === 'plataforma') modeLabel = 'plat.';
+        else if (mode === 'challenge') modeLabel = 'challange';
 
         container.innerHTML += `
           <div class="card">
@@ -169,17 +173,14 @@
 
     async function approveLevel(id) {
       const targetPos = parseInt(document.getElementById(`pos-${id}`).value, 10);
-
       if (isNaN(targetPos) || targetPos < 1) {
         alert("Insira uma posição válida.");
         return;
       }
-
       const { error } = await supabaseClient.rpc('approve_level_with_pos', {
         p_level_id: id,
         p_target_pos: targetPos
       });
-
       if (error) {
         alert("Erro ao aprovar nível: " + error.message);
       } else {
@@ -193,21 +194,16 @@
         alert("Apenas ADMINS podem alterar a posição de níveis já aprovados.");
         return;
       }
-
       const newPos = parseInt(document.getElementById(`pos-${id}`).value, 10);
-
       if (isNaN(newPos) || newPos < 1) {
         alert("Insira uma posição válida.");
         return;
       }
-
       if (newPos === currentPos) return;
-
       const { error } = await supabaseClient.rpc('update_level_position', {
         p_level_id: id,
         p_new_pos: newPos
       });
-
       if (error) {
         alert("Erro ao atualizar posição: " + error.message);
       } else {

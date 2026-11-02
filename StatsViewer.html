@@ -101,10 +101,12 @@
           const gdId = r.levels ? r.levels.gd_id : '?';
           const listType = r.levels ? (r.levels.list_type || 'LPDM') : 'LPDM';
           
-          const isPlat = r.levels ? (r.levels.is_platformer || r.levels.game_mode === 'plataforma') : false;
-          const gameModeName = isPlat ? 'Plataforma' : 'Clássico';
+          // Modo de jogo separado (Clássico, Plataforma ou Challenge)
+          const mode = r.levels ? (r.levels.game_mode || (r.levels.is_platformer ? 'plataforma' : 'classico')) : 'classico';
+          let gameModeName = 'Clássico';
+          if (mode === 'plataforma') gameModeName = 'Plataforma';
+          else if (mode === 'challenge') gameModeName = 'Challenge';
 
-          // Montagem no formato exigido: [nome do level] • [Lista] • [Modo] • [porcentagem]...
           let infoParts = [];
           infoParts.push(`<strong>${lvlName}</strong>`);
           infoParts.push(listType);

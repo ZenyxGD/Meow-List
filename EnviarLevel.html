@@ -30,7 +30,6 @@
     <a href="index.html"><i class="fa-solid fa-arrow-left"></i> Voltar ao Início</a>
     <h2>Enviar Nível - Meow List</h2>
     
-    <!-- Caixa de Regras -->
     <div class="rules-box">
       <b>Regras de Envio:</b><br>
       1. Apenas levels feitos por fãs do Meow<br>
@@ -79,6 +78,7 @@
         <select id="gameMode" required>
           <option value="classico">Clássico</option>
           <option value="plataforma">Plataforma</option>
+          <option value="challenge">Challenge</option>
         </select>
       </div>
 
@@ -119,17 +119,14 @@
       
       if (session) {
         let username = session.user.user_metadata.username;
-
         if (!username) {
           const { data: profile } = await supabaseClient
             .from('profiles')
             .select('username')
             .eq('id', session.user.id)
             .single();
-            
           if (profile && profile.username) username = profile.username;
         }
-
         text.innerHTML = `Logado como: <b>${username || session.user.email}</b>`;
       } else {
         text.innerHTML = `Modo Convidado (Envios permitidos)`;
@@ -167,7 +164,7 @@
       const creator = document.getElementById('levelCreator').value.trim();
       const verifier = document.getElementById('levelVerifier').value.trim();
       const listType = document.getElementById('listType').value;
-      const gameMode = document.getElementById('gameMode').value;
+      const gameMode = document.getElementById('gameMode').value; // 'classico', 'plataforma', 'challenge'
       const isPlatformer = (gameMode === 'plataforma');
       const description = document.getElementById('levelDescription').value.trim() || null;
       const hasNong = document.getElementById('hasNong').checked;
