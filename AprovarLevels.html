@@ -12,16 +12,18 @@
     body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; padding: 20px; display: flex; flex-direction: column; align-items: center; }
     header { width: 100%; max-width: 950px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--card-border); padding-bottom: 15px; }
     .tabs { display: flex; gap: 8px; margin-bottom: 20px; width: 100%; max-width: 950px; flex-wrap: wrap; }
-    .tab-btn { flex: 1; min-width: 160px; padding: 12px; background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-muted); font-weight: bold; border-radius: 8px; cursor: pointer; text-align: center; font-size: 0.85rem; }
+    .tab-btn { flex: 1; min-width: 150px; padding: 12px; background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-muted); font-weight: bold; border-radius: 8px; cursor: pointer; text-align: center; font-size: 0.85rem; }
     .tab-btn.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
     .list-container { width: 100%; max-width: 950px; display: flex; flex-direction: column; gap: 12px; }
     .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
     .actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    input.pos-input { background: #0b111e; border: 1px solid var(--card-border); color: #fff; padding: 6px; border-radius: 4px; width: 60px; text-align: center; font-weight: bold; }
+    input.pos-input, select.move-select { background: #0b111e; border: 1px solid var(--card-border); color: #fff; padding: 6px 10px; border-radius: 4px; font-weight: bold; font-size: 0.85rem; outline: none; }
+    input.pos-input { width: 60px; text-align: center; }
     button { padding: 8px 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; color: #fff; display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; }
     .btn-approve { background: var(--accent-green); }
     .btn-delete { background: var(--accent-red); }
     .btn-update { background: var(--accent-blue); }
+    .btn-move { background: #8b5cf6; }
     .btn-video { background: #1e293b; color: var(--accent-blue); border: 1px solid var(--card-border); text-decoration: none; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 4px; }
   </style>
 </head>
@@ -38,6 +40,7 @@
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('pending_levels')">Níveis Pendentes</button>
     <button class="tab-btn" onclick="switchTab('approved_levels')">Níveis Aprovados</button>
+    <button class="tab-btn" onclick="switchTab('move_levels')"><i class="fa-solid fa-arrows-split-up-and-left"></i> Mover Níveis</button>
     <button class="tab-btn" onclick="switchTab('pending_records')">Records Pendentes</button>
     <button class="tab-btn" onclick="switchTab('approved_records')">Records Aprovados</button>
   </div>
@@ -89,6 +92,9 @@
       } else if (mode === 'approved_levels') {
         const { data } = await supabaseClient.from('levels').select('*').eq('meow_status', 'approved').order('position');
         renderLevels(data, false);
+      } else if (mode === 'move_levels') {
+        const { data } = await supabaseClient.from('levels').select('*').eq('meow_status', 'approved').order('name');
+        renderMoveLevels(data);
       } else if (mode === 'pending_records') {
         const { data } = await supabaseClient.from('records').select('*, levels(name, creator, gd_id)').eq('status', 'pending');
         renderRecords(data, true);
@@ -107,8 +113,6 @@
 
       levels.forEach(lvl => {
         const showcaseLink = lvl.showcase_url || lvl.video_url || null;
-        
-        // Identificação do modo de jogo com "challange" solicitado
         const mode = lvl.game_mode || (lvl.is_platformer ? 'plataforma' : 'classico');
         let modeLabel = 'clas.';
         if (mode === 'plataforma') modeLabel = 'plat.';
@@ -140,6 +144,66 @@
           </div>
         `;
       });
+    }
+
+    // Renderiza a aba de Transferência/Movimentação de Lista e Modo de Jogo
+    function renderMoveLevels(levels) {
+      const container = document.getElementById('adminContainer');
+      if (!levels || levels.length === 0) { 
+        container.innerHTML = '<p style="text-align:center; color: var(--text-muted);">Nenhum nível aprovado para mover.</p>'; 
+        return; 
+      }
+      container.innerHTML = '';
+
+      levels.forEach(lvl => {
+        const currentMode = lvl.game_mode || (lvl.is_platformer ? 'plataforma' : 'classico');
+
+        container.innerHTML += `
+          <div class="card">
+            <div>
+              <strong>${lvl.name}</strong> (${lvl.gd_id})<br>
+              <small style="color:var(--text-muted)">Lista Atual: <b>${lvl.list_type}</b> | Modo Atual: <b>${currentMode}</b></small>
+            </div>
+            <div class="actions">
+              <select id="moveList-${lvl.id}" class="move-select">
+                <option value="LPDM" ${lvl.list_type === 'LPDM' ? 'selected' : ''}>LPDM</option>
+                <option value="LIDM" ${lvl.list_type === 'LIDM' ? 'selected' : ''}>LIDM</option>
+                <option value="LLBDM" ${lvl.list_type === 'LLBDM' ? 'selected' : ''}>LLBDM</option>
+              </select>
+
+              <select id="moveMode-${lvl.id}" class="move-select">
+                <option value="classico" ${currentMode === 'classico' ? 'selected' : ''}>Clássico</option>
+                <option value="plataforma" ${currentMode === 'plataforma' ? 'selected' : ''}>Plataforma</option>
+                <option value="challenge" ${currentMode === 'challenge' ? 'selected' : ''}>Challenge</option>
+              </select>
+
+              <button class="btn-move" onclick="moveLevel('${lvl.id}')"><i class="fa-solid fa-right-left"></i> Salvar Mudança</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    async function moveLevel(id) {
+      const newList = document.getElementById(`moveList-${id}`).value;
+      const newMode = document.getElementById(`moveMode-${id}`).value;
+      const isPlatformer = (newMode === 'plataforma');
+
+      const { error } = await supabaseClient
+        .from('levels')
+        .update({
+          list_type: newList,
+          game_mode: newMode,
+          is_platformer: isPlatformer
+        })
+        .eq('id', id);
+
+      if (error) {
+        alert("Erro ao mover nível: " + error.message);
+      } else {
+        alert("Nível movido com sucesso!");
+        loadView('move_levels');
+      }
     }
 
     function renderRecords(records, isPending) {
