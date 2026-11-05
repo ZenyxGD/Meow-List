@@ -134,10 +134,8 @@
                 <button class="btn-approve" onclick="approveLevel('${lvl.id}')"><i class="fa-solid fa-check"></i> Aprovar</button>
                 <button class="btn-delete" onclick="deleteLevel('${lvl.id}')"><i class="fa-solid fa-xmark"></i> Recusar</button>
               ` : `
-                ${isAdmin ? `
-                  <input type="number" id="pos-${lvl.id}" class="pos-input" value="${lvl.position || 1}" min="1">
-                  <button class="btn-update" onclick="updatePosition('${lvl.id}', ${lvl.position || 1})"><i class="fa-solid fa-arrows-up-down"></i> Alterar Posição</button>
-                ` : ''}
+                <input type="number" id="pos-${lvl.id}" class="pos-input" value="${lvl.position || 1}" min="1">
+                <button class="btn-update" onclick="updatePosition('${lvl.id}', ${lvl.position || 1})"><i class="fa-solid fa-arrows-up-down"></i> Alterar Posição</button>
                 <button class="btn-delete" onclick="deleteLevel('${lvl.id}')"><i class="fa-solid fa-trash"></i> Remover</button>
               `}
             </div>
@@ -146,7 +144,6 @@
       });
     }
 
-    // Renderiza a aba de Transferência/Movimentação de Lista e Modo de Jogo
     function renderMoveLevels(levels) {
       const container = document.getElementById('adminContainer');
       if (!levels || levels.length === 0) { 
@@ -254,20 +251,17 @@
     }
 
     async function updatePosition(id, currentPos) {
-      if (currentUserRole !== 'admin') {
-        alert("Apenas ADMINS podem alterar a posição de níveis já aprovados.");
-        return;
-      }
       const newPos = parseInt(document.getElementById(`pos-${id}`).value, 10);
       if (isNaN(newPos) || newPos < 1) {
         alert("Insira uma posição válida.");
         return;
       }
-      if (newPos === currentPos) return;
+      
       const { error } = await supabaseClient.rpc('update_level_position', {
         p_level_id: id,
         p_new_pos: newPos
       });
+
       if (error) {
         alert("Erro ao atualizar posição: " + error.message);
       } else {
